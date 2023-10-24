@@ -1,0 +1,22 @@
+.git
+.idea
+.env
+venv/
+.DS_Store # macOS specific ignore
+airflow_settings.yaml
+__pycache__/
+astro
+
+# terraform in infra/
+infra/.terraform
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/*.json
+infa/terraform.plan
+infra/.terraform.lock.hcl
+
+include/dbt/dbt_packages
+include/dbt/target
+include/dbt/logs
+
+

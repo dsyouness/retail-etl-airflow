@@ -1,0 +1,6 @@
+FROM hashicorp/terraform:1.5
+RUN mkdir /app
+COPY . /app
+WORKDIR /app
+RUN terraform init
+RUN terraform apply -auto-approve
