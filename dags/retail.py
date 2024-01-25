@@ -1,3 +1,6 @@
+import glob
+import os
+
 from airflow.decorators import dag, task
 from datetime import datetime
 
@@ -21,11 +24,12 @@ from cosmos.config import ProjectConfig, RenderConfig
     catchup=False,
     tags=['retail'],
 )
-
 def retail():
     """
     This DAG is used to load the retail dataset into BigQuery.
     """
+
+    # Upload CSV files to GCS
     upload_csv_to_gcs = LocalFilesystemToGCSOperator(
         task_id='upload_csv_to_gcs',
         src='include/dataset/*.csv',
@@ -35,7 +39,8 @@ def retail():
         mime_type='text/csv',
     )
 
-    csv_files = ['invoices.csv', 'countries.csv']
+    # get list of files from the include/dataset folder
+    csv_files = [os.path.basename(file) for file in glob.glob('include/dataset/*.csv')]
 
     # Use a TaskGroup for parallel execution of tasks
     with TaskGroup('process_csv_files') as process_csv_group:
@@ -55,21 +60,7 @@ def retail():
                 use_native_support=False,
             )
 
-    # gcs_to_raw = aql.load_file(
-    #     task_id='gcs_to_raw',
-    #     input_file=File(
-    #         'gs://retail-dsy/raw/invoices.csv',
-    #         conn_id='gcp',
-    #         filetype=FileType.CSV,
-    #     ),
-    #     output_table=Table(
-    #         name='raw_invoices',
-    #         conn_id='gcp',
-    #         metadata=Metadata(schema='retail')
-    #     ),
-    #     use_native_support=False,
-    # )
-
+    # transform data using dbt
     transform = DbtTaskGroup(
         group_id='transform',
         project_config=DBT_PROJECT_CONFIG,
@@ -80,6 +71,7 @@ def retail():
         )
     )
 
+    # transform data using dbt
     report = DbtTaskGroup(
         group_id='report',
         project_config=DBT_PROJECT_CONFIG,
